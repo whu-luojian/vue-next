@@ -22,6 +22,10 @@ const shallowGet = /*#__PURE__*/ createGetter(false, true)
 const readonlyGet = /*#__PURE__*/ createGetter(true)
 const shallowReadonlyGet = /*#__PURE__*/ createGetter(true, true)
 
+/**
+ * 数组['includes', 'indexOf', 'lastIndexOf']操作函数重写，增加追踪
+ * arrayInstrumentations 中会触发数组每一项值得 GET 追踪，因为 一旦数组的变了，方法的返回值也会变，所以需要全部追踪。
+ */
 const arrayInstrumentations: Record<string, Function> = {}
 ;['includes', 'indexOf', 'lastIndexOf'].forEach(key => {
   arrayInstrumentations[key] = function(...args: any[]): any {
@@ -40,14 +44,25 @@ const arrayInstrumentations: Record<string, Function> = {}
   }
 })
 
+/**
+ * proxy get拦截对象的读取属性操作
+ * @param isReadonly 是否只读
+ * @param shallow 是否浅层处理
+ */
 function createGetter(isReadonly = false, shallow = false) {
+  /**
+   * Proxy get hander
+   * target: 被代理的目标对象
+   * key: 拦截的对象属性key
+   * receiver：返回的代理本身
+   */
   return function get(target: object, key: string | symbol, receiver: object) {
-    if (key === ReactiveFlags.IS_REACTIVE) {
+    if (key === ReactiveFlags.IS_REACTIVE) {    // isReactive 判断对象是否是由 reactive 创建的响应式代理
       return !isReadonly
-    } else if (key === ReactiveFlags.IS_READONLY) {
+    } else if (key === ReactiveFlags.IS_READONLY) {   // isReadonly 检查一个对象是否是由 readonly 创建的只读代理
       return isReadonly
     } else if (
-      key === ReactiveFlags.RAW &&
+      key === ReactiveFlags.RAW &&  // 获取由 reactive 或 readonly 方法转换成响应式代理的普通对象
       receiver ===
         (isReadonly
           ? (target as any)[ReactiveFlags.READONLY]
@@ -151,6 +166,9 @@ function ownKeys(target: object): (string | number | symbol)[] {
   return Reflect.ownKeys(target)
 }
 
+/**
+ * 响应式代理（可修改）帮助函数
+ */
 export const mutableHandlers: ProxyHandler<object> = {
   get,
   set,
@@ -159,6 +177,9 @@ export const mutableHandlers: ProxyHandler<object> = {
   ownKeys
 }
 
+/**
+ * 只读代理帮助函数
+ */
 export const readonlyHandlers: ProxyHandler<object> = {
   get: readonlyGet,
   has,

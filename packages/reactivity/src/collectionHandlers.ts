@@ -316,6 +316,9 @@ function createInstrumentationGetter(isReadonly: boolean, shallow: boolean) {
   }
 }
 
+/**
+ * 响应式代理（可修改）帮助函数
+ */
 export const mutableCollectionHandlers: ProxyHandler<CollectionTypes> = {
   get: createInstrumentationGetter(false, false)
 }
@@ -324,6 +327,9 @@ export const shallowCollectionHandlers: ProxyHandler<CollectionTypes> = {
   get: createInstrumentationGetter(false, true)
 }
 
+/**
+ * 只读代理帮助函数
+ */
 export const readonlyCollectionHandlers: ProxyHandler<CollectionTypes> = {
   get: createInstrumentationGetter(true, false)
 }

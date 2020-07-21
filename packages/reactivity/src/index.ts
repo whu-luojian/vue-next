@@ -1,3 +1,4 @@
+// https://mp.weixin.qq.com/s?__biz=MzI2NTk2NzUxNg==&mid=2247486033&idx=1&sn=383bb32d6162a7f794950dfc95c0b83e
 export {
   ref,
   unref,
@@ -22,8 +23,7 @@ export {
   shallowReadonly,
   markRaw,
   toRaw,
-  ReactiveFlags,
-  DeepReadonly
+  ReactiveFlags
 } from './reactive'
 export {
   computed,

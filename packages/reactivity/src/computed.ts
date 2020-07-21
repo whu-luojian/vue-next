@@ -1,8 +1,10 @@
 import { effect, ReactiveEffect, trigger, track } from './effect'
 import { TriggerOpTypes, TrackOpTypes } from './operations'
 import { Ref } from './ref'
+/**
+ * NOOP - 空函数
+ */
 import { isFunction, NOOP } from '@vue/shared'
-import { ReactiveFlags } from './reactive'
 
 export interface ComputedRef<T = any> extends WritableComputedRef<T> {
   readonly value: T
@@ -24,6 +26,11 @@ export function computed<T>(getter: ComputedGetter<T>): ComputedRef<T>
 export function computed<T>(
   options: WritableComputedOptions<T>
 ): WritableComputedRef<T>
+
+/**
+ * 构建计算属性
+ * @param getterOrOptions getter -> readonly / getter & setter -> writable
+ */
 export function computed<T>(
   getterOrOptions: ComputedGetter<T> | WritableComputedOptions<T>
 ) {
@@ -42,27 +49,32 @@ export function computed<T>(
     setter = getterOrOptions.set
   }
 
-  let dirty = true
+  let dirty = true // dirty 为true，代表脏值，表示依赖的数据变了，计算属性重新计算
   let value: T
   let computed: ComputedRef<T>
 
   const runner = effect(getter, {
     lazy: true,
+    // mark effect as computed so that it gets priority during trigger
+    /**
+     * 计算属性依赖的属性值变化时会执行调度器，将 dirty 设置为 true，表明下次取计算属性值时需要重新计算
+     */
     scheduler: () => {
       if (!dirty) {
         dirty = true
+        // 计算属性依赖的属性值变了，触发更新
         trigger(computed, TriggerOpTypes.SET, 'value')
       }
     }
   })
   computed = {
     __v_isRef: true,
-    [ReactiveFlags.IS_READONLY]:
-      isFunction(getterOrOptions) || !getterOrOptions.set,
-
     // expose effect so computed can be stopped
     effect: runner,
     get value() {
+      /**
+       * dirty 为 true 表示第一次取值，或计算属性依赖的属性值变了，重新计算取值
+       */
       if (dirty) {
         value = runner()
         dirty = false

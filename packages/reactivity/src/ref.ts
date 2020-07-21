@@ -12,7 +12,7 @@ export interface Ref<T = any> {
    * We need this to be in public d.ts but don't want it to show up in IDE
    * autocomplete, so we use a private Symbol instead.
    */
-  [RefSymbol]: true
+  [RefSymbol]: true // 标识是否是 ref
   value: T
 }
 
@@ -41,13 +41,21 @@ export function shallowRef(value?: unknown) {
   return createRef(value, true)
 }
 
+/**
+ * 创建 ref 对象, 比如：ref(0)
+ * @param rawValue 传入的原始值
+ * @param shallow 创建一个 ref ，将会追踪它的 .value 更改操作
+ */
 function createRef(rawValue: unknown, shallow = false) {
+  /**
+   * 如果传入的原始值本身是 ref，则直接返回
+   */
   if (isRef(rawValue)) {
     return rawValue
   }
   let value = shallow ? rawValue : convert(rawValue)
   const r = {
-    __v_isRef: true,
+    __v_isRef: true, // 标识是否是 ref
     get value() {
       track(r, TrackOpTypes.GET, 'value')
       return value
@@ -150,16 +158,23 @@ type BaseTypes = string | number | boolean
  * }
  * ```
  *
- * Note that api-extractor somehow refuses to include `declare module`
+ * Note that api-extractor somehow refuses to include `decalre module`
  * augmentations in its generated d.ts, so we have to manually append them
  * to the final generated d.ts in our build process.
  */
 export interface RefUnwrapBailTypes {}
 
+/**
+ * infer 表示类型推断，见：https://jkchao.github.io/typescript-book-chinese/tips/infer.html#%E4%BB%8B%E7%BB%8D
+ * 将Ref类型拆开，获取值的类型
+ */
 export type UnwrapRef<T> = T extends Ref<infer V>
-  ? UnwrapRefSimple<V>
-  : UnwrapRefSimple<T>
+  ? UnwrapRefSimple<V>  // T是Ref类似情况下，返回值的类型
+  : UnwrapRefSimple<T>  // T不是Ref类型情况下，返回T
 
+/**
+ * 
+ */
 type UnwrapRefSimple<T> = T extends
   | Function
   | CollectionTypes
